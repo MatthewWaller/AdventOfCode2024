@@ -7,6 +7,7 @@
 
 
 import SwiftUI
+import RegexBuilder
 
 struct Problem: Identifiable {
     var id: Int {
@@ -97,6 +98,17 @@ struct Problem: Identifiable {
         }
         
         return reports
+    }
+    
+    static func parseDay3Data() -> String? {
+        // Access the data from the asset catalog
+        guard let asset = NSDataAsset(name: "Day3Data") else {
+            print("Error: Could not find data asset")
+            return nil
+        }
+        
+        
+        return String(data: asset.data, encoding: .utf8)
     }
     
     static let allProblems: [Problem] = [
@@ -236,6 +248,86 @@ struct Problem: Identifiable {
             }
             
             return "\(numberOfSafeReports)"
+        }),
+        Problem(number: 5, function: {
+            guard let reports = Problem.parseDay3Data() else { return "" }
+            
+            let mulPattern = Regex {
+                "mul("
+                Capture {
+                    OneOrMore {
+                        .digit
+                    }
+                }
+                ","
+                Capture {
+                    OneOrMore {
+                        .digit
+                    }
+                }
+                ")"
+            }
+            
+            guard let text = Problem.parseDay3Data() else { return "" }
+            
+            var total = 0
+            for match in text.matches(of: mulPattern) {
+                if let firstDigit = Int(match.output.1), let secondDigit = Int(match.output.2) {
+                    total += firstDigit * secondDigit
+                }
+            }
+            
+            return "\(total)"
+        }),
+        Problem(number: 6, function: {
+            guard let reports = Problem.parseDay3Data() else { return "" }
+            
+            let mulPattern = Regex {
+                ChoiceOf {
+                    Regex {
+                        "mul("
+                        Capture {
+                            OneOrMore {
+                                .digit
+                            }
+                        }
+                        ","
+                        Capture {
+                            OneOrMore {
+                                .digit
+                            }
+                        }
+                        ")"
+                    }
+                    "don't"
+                    "do"
+                }
+                
+            }
+            
+            guard let text = Problem.parseDay3Data() else { return "" }
+            
+            var total = 0
+            var lastOutputWasDont = false
+            for match in text.matches(of: mulPattern) {
+                if match.output.0 == "don't" {
+                    lastOutputWasDont = true
+                } else if match.output.0 == "do" {
+                    lastOutputWasDont = false
+                }
+                
+                if lastOutputWasDont { continue }
+                if let firstOutput = match.output.1,
+                    let secondOutput = match.output.2,
+                   let firstDigit = Int(firstOutput),
+                   let secondDigit = Int(secondOutput)
+                {
+                    total += firstDigit * secondDigit
+                    
+                }
+            }
+            
+            return "\(total)"
         })
     ]
         
