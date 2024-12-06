@@ -100,9 +100,9 @@ struct Problem: Identifiable {
         return reports
     }
     
-    static func parseDay3Data() -> String? {
+    static func returnDataAsString(day: String) -> String? {
         // Access the data from the asset catalog
-        guard let asset = NSDataAsset(name: "Day3Data") else {
+        guard let asset = NSDataAsset(name: day) else {
             print("Error: Could not find data asset")
             return nil
         }
@@ -110,6 +110,8 @@ struct Problem: Identifiable {
         
         return String(data: asset.data, encoding: .utf8)
     }
+    
+    
     
     static let allProblems: [Problem] = [
         Problem(number: 1, function: {
@@ -250,8 +252,6 @@ struct Problem: Identifiable {
             return "\(numberOfSafeReports)"
         }),
         Problem(number: 5, function: {
-            guard let reports = Problem.parseDay3Data() else { return "" }
-            
             let mulPattern = Regex {
                 "mul("
                 Capture {
@@ -268,7 +268,7 @@ struct Problem: Identifiable {
                 ")"
             }
             
-            guard let text = Problem.parseDay3Data() else { return "" }
+            guard let text = Problem.returnDataAsString(day: "Day3Data") else { return "" }
             
             var total = 0
             for match in text.matches(of: mulPattern) {
@@ -280,8 +280,6 @@ struct Problem: Identifiable {
             return "\(total)"
         }),
         Problem(number: 6, function: {
-            guard let reports = Problem.parseDay3Data() else { return "" }
-            
             let mulPattern = Regex {
                 ChoiceOf {
                     Regex {
@@ -305,7 +303,7 @@ struct Problem: Identifiable {
                 
             }
             
-            guard let text = Problem.parseDay3Data() else { return "" }
+            guard let text = Problem.returnDataAsString(day: "Day3Data") else { return "" }
             
             var total = 0
             var lastOutputWasDont = false
@@ -328,7 +326,137 @@ struct Problem: Identifiable {
             }
             
             return "\(total)"
-        })
+        }),
+        Problem(number: 7, function: {
+            guard let text = Problem.returnDataAsString(day: "Day4Data") else {
+                return "0"
+            }
+
+            let grid = text.components(separatedBy: .newlines)
+                .filter { !$0.isEmpty }
+                .map { Array($0) }
+            func findWord(_ grid: [[Character]], word: String) -> Int {
+                let rows = grid.count
+                let cols = grid[0].count
+                let wordChars = Array(word)
+                
+                // Define all eight directions as (row, column) offsets
+                let directions = [
+                    (-1, 0),  // up
+                    (1, 0),   // down
+                    (0, -1),  // left
+                    (0, 1),   // right
+                    (-1, -1), // up-left
+                    (-1, 1),  // up-right
+                    (1, -1),  // down-left
+                    (1, 1)    // down-right
+                ]
+                
+                func isValidPosition(_ row: Int, _ col: Int) -> Bool {
+                    row >= 0 && row < rows && col >= 0 && col < cols
+                }
+                
+                func checkDirection(startRow: Int, startCol: Int, direction: (Int, Int)) -> Bool {
+                    let (dRow, dCol) = direction
+                    
+                    // Check if the word would fit in this direction
+                    for i in 0..<wordChars.count {
+                        let newRow = startRow + (dRow * i)
+                        let newCol = startCol + (dCol * i)
+                        
+                        if !isValidPosition(newRow, newCol) || grid[newRow][newCol] != wordChars[i] {
+                            return false
+                        }
+                    }
+                    return true
+                }
+                
+                var count = 0
+                
+                // Check each position in the grid
+                for row in 0..<rows {
+                    for col in 0..<cols {
+                        // For each direction
+                        for direction in directions {
+                            if checkDirection(startRow: row, startCol: col, direction: direction) {
+                                count += 1
+                            }
+                        }
+                    }
+                }
+                
+                return count
+            }
+            
+            let result = findWord(grid, word: "XMAS")
+            
+            return "\(result)"
+        }),
+        Problem(number: 8, function: {
+            guard let text = Problem.returnDataAsString(day: "Day4Data") else { return ""}
+            var lines: [[Character]] = text.components(separatedBy: .newlines).map { line in
+                Array(line)
+            }.compactMap { array in
+                if array.isEmpty { return nil }
+                return array
+            }
+            let rows = lines.count
+            let columns = lines.first?.count ?? 0
+            let word = Array("MAS")
+            
+            enum GridDirection: CaseIterable {
+                case downSlash
+                case upSlash
+            }
+            
+            func isMASbyMAS(row: Int, column: Int) -> Bool {
+                func isRowColumnValid(_ rowIndex: Int, _ columnIndex: Int) -> Bool {
+                    return rowIndex >= 0 && rowIndex < rows && columnIndex >= 0 && columnIndex < columns
+                }
+                var isDownSlash = false
+                var isUpSlash = false
+                
+                var downSlash: [Character] = []
+                let downSlashDirections = [(row - 1, column - 1),
+                              (row, column),
+                              (row + 1, column + 1)]
+                
+                for direction in downSlashDirections {
+                    if isRowColumnValid(direction.0, direction.1) {
+                        downSlash.append(lines[direction.0][direction.1])
+                    }
+                }
+                
+                isDownSlash = String(downSlash) == String(word) || String(downSlash.reversed()) == String(word)
+                
+                var upSlash: [Character] = []
+                let upSlashDirections = [(row + 1, column - 1),
+                              (row, column),
+                              (row - 1, column + 1)]
+                
+                for direction in upSlashDirections {
+                    if isRowColumnValid(direction.0, direction.1) {
+                        upSlash.append(lines[direction.0][direction.1])
+                    }
+                }
+                
+                isUpSlash = String(upSlash) == String(word) || String(upSlash.reversed()) == String(word)
+                
+                return isDownSlash && isUpSlash
+            }
+            
+            var total = 0
+            
+            for row in 0..<rows {
+                for column in 0..<columns {
+                    if isMASbyMAS(row: row, column: column) {
+                        total += 1
+                    }
+                }
+            }
+            
+            return "\(total)"
+        }),
     ]
         
 }
